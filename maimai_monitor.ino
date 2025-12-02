@@ -1,5 +1,4 @@
 #include <atomic>
-#include <bit>
 #include <esp_task.h>
 
 #include <HTTPClient.h>
