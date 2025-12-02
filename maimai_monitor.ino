@@ -170,8 +170,6 @@ long maimai_check() {
 
   // 100 or 2xx
   if (httpCode == 100 || httpCode / 100 == 2) {
-    Serial.printf("%ld\n", elapsed);
-
     // not setting color: single-color screen
     if (elapsed >= 4000) {
       start_flash_light(2000, 3);
@@ -188,21 +186,25 @@ long maimai_check() {
 }
 
 std::atomic<long> Elapsed(0);
-std::atomic<unsigned> RecentError(0);
+std::atomic<uint32_t> RecentError(0);
+
+const int BITS_OF_STATUS = 3;
+const uint32_t STATUS_MASK = 0b111;
+const uint32_t REQUEST_FAILED = 0b001;
+const uint32_t REQUEST_TIMEOUT = 0b010;
 
 void maimai_check_worker(void *) {
-  unsigned recent_error;
+  uint32_t recent_error;
 
   for (;;) {
     long elapsed = maimai_check();
     Elapsed.store(elapsed);
 
-    // bitvec of status
-    recent_error <<= 2;
+    recent_error <<= BITS_OF_STATUS;
     if (elapsed <= 0)
-      recent_error |= 0x01;
+      recent_error |= REQUEST_FAILED;
     if (elapsed >= 1000)
-      recent_error |= 0x11;
+      recent_error |= REQUEST_TIMEOUT;
     RecentError.store(recent_error);
 
     if (elapsed > 0 && elapsed < 1000) {
@@ -232,18 +234,19 @@ void loop() {
   display.clearDisplay();
   display.setCursor(0, 0);
 
-  unsigned recent_errors = RecentError.load();
+  uint32_t recent_errors = RecentError.load();
   for (int i = 9; i >= 0; i--) {
-    unsigned is_error = recent_errors >> (2 * i);
-    switch (is_error & 0x11) {
-    case 0x01:
+    uint32_t is_error = (recent_errors >> (BITS_OF_STATUS * i)) & STATUS_MASK;
+    switch (is_error) {
+    case REQUEST_FAILED:
       display.print("X");
       break;
-    case 0x11:
+    case REQUEST_TIMEOUT:
       display.print("T");
       break;
     default:
       display.print("O");
+      break;
     }
   }
   display.print("\n");
