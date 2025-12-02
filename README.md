@@ -1,5 +1,6 @@
 # maimai monitor
 
+> Try it without an ESP32 and a SSD1315 screen: [Wokwi simulation](https://github.com/mokurin000/wokwi-esp32-maimai-monitor)
 
 **NOW integrated with OLED 128x64 SSD13xx.**
 
