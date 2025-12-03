@@ -225,7 +225,7 @@ const recenterror_t REQUEST_TIMEOUT_MESSY = 0b100;
 std::atomic<uint32_t> SuccCount(0), TimeoutCount(0), ErrCount(0);
 
 void maimai_check_worker(void *) {
-  recenterror_t recent_error;
+  recenterror_t recent_error = 0;
 
   for (;;) {
     if (WIFI_DISCONNECTED) {
@@ -235,18 +235,31 @@ void maimai_check_worker(void *) {
     long elapsed = maimai_check();
     Elapsed.store(elapsed);
 
+    recenterror_t mask;
+
+    if (elapsed <= 0) mask = REQUEST_FAILED;
+    else if (elapsed >= 4000) mask = REQUEST_TIMEOUT_MESSY;
+    else if (elapsed >= 2000) mask = REQUEST_TIMEOUT_LONG;
+    else if (elapsed >= 1000) mask = REQUEST_TIMEOUT;
+    else mask = REQUEST_SUCCEED;
+    
     recent_error <<= BITS_OF_STATUS;
-    if (elapsed <= 0) recent_error |= REQUEST_FAILED;
-    else if (elapsed >= 4000) recent_error |= REQUEST_TIMEOUT_MESSY;
-    else if (elapsed >= 2000) recent_error |= REQUEST_TIMEOUT_LONG;
-    else if (elapsed >= 1000) recent_error |= REQUEST_TIMEOUT;
-    else recent_error |= REQUEST_SUCCEED;
+    recent_error |= mask;
     RecentError.store(recent_error);
 
-    if (elapsed <= 0) ErrCount.fetch_add(1);
-    else {
-      if (elapsed >= 1000) TimeoutCount.fetch_add(1);
-      SuccCount.fetch_add(1);
+    switch (mask) {
+      case REQUEST_FAILED:
+        ErrCount.fetch_add(1);
+        break;
+
+      case REQUEST_TIMEOUT:
+      case REQUEST_TIMEOUT_LONG:
+      case REQUEST_TIMEOUT_MESSY:
+        TimeoutCount.fetch_add(1);
+      case REQUEST_SUCCEED:
+        SuccCount.fetch_add(1);
+      default:
+        break;
     }
 
     if (elapsed > 0 && elapsed < 1000) {
