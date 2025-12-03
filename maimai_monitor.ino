@@ -9,13 +9,15 @@
 #include <Adafruit_SSD1306.h>
 #include <Wire.h>
 
+#define NO_LED_FLASHING 1
+
 // 你使用的 OLED 尺寸（最常见的是 128x64）
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 
 // ESP32 硬件 I2C 引脚
-#define SDA_PIN 22
-#define SCL_PIN 23
+#define SDA_PIN 33
+#define SCL_PIN 32
 
 #define OLED_ADDR 0x3C
 
@@ -52,6 +54,9 @@ void flash_led(void *) {
 }
 
 void start_flash_light(unsigned interval_ms, unsigned times) {
+  #if NO_LED_FLASHING
+  return;
+  #endif
   // ignore if already flashing
   if (Flashing.load()) {
     return;
@@ -70,10 +75,10 @@ void spawn_flash_task() {
   xTaskCreate(flash_led, "flash_led", 2000, NULL, ESP_TASK_PRIO_MAX - 1, NULL);
 }
 
+
 // 创建 I2C 实例（ESP32 默认使用 Wire，也可以自定义）
 TwoWire I2CESP32 = TwoWire(0); // I2C0
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &I2CESP32,
-                         -1); // -1 表示不使用 reset 引脚
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &I2CESP32, -1); // -1 表示不使用 reset 引脚
 void initialise_oled() {
   // 初始化硬件 I2C（ESP32）
   I2CESP32.begin(SDA_PIN, SCL_PIN, 400000); // 400kHz 速度
@@ -81,18 +86,17 @@ void initialise_oled() {
   // 初始化 OLED
   if (!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) {
     Serial.println(F("SSD1306 allocation failed"));
-    for (;;)
-      ; // 初始化失败，死循环
+    for (;;); // 初始化失败，死循环
   }
 
   // 清屏
   display.clearDisplay();
 
   // 设置文字大小和颜色
-  display.setTextSize(2);              // 2倍大小
+  display.setTextSize(2);       // 2倍大小
   display.setTextColor(SSD1306_WHITE); // 白字
 
-  display.setCursor(0, 0); // x=15, y=20
+  display.setCursor(0, 0);    // x=15, y=20
   display.print("Init");
   display.dim(true);
 
@@ -110,8 +114,8 @@ void connect_wifi() {
   while (WiFi.status() != WL_CONNECTED) {
     display.print(".");
     display.display();
-    start_flash_light(250, 1);
-    delay(500);
+    start_flash_light(125, 1);
+    delay(250);
   }
   Serial.println("");
   Serial.println("WiFi connected!");
@@ -124,7 +128,7 @@ HTTPClient https;
 
 void maimai_check_setup() {
   const char *serverUrl = "https://152.136.99.118:42081/Maimai2Servlet/"
-                          "250b3482854e7697de7d8eb6ea1fabb1";
+                        "250b3482854e7697de7d8eb6ea1fabb1";
 
   if (!client) {
     Serial.println("Failed to create secure client");
@@ -154,13 +158,14 @@ void maimai_check_setup() {
 
 long maimai_check() {
   static uint8_t payload[] = {0xFD, 0xAA, 0xAA, 0x65, 0xBE, 0x9A, 0x7A, 0xA1,
-                              0x46, 0x84, 0xB9, 0xDD, 0x29, 0x64, 0x98, 0x80};
+                     0x46, 0x84, 0xB9, 0xDD, 0x29, 0x64, 0x98, 0x80};
 
   // POST with raw binary payload
   unsigned long startTime = (unsigned long)esp_timer_get_time();
   int httpCode =
       https.POST(reinterpret_cast<uint8_t *>(payload), sizeof(payload));
-  long elapsed = ((unsigned long)esp_timer_get_time() - startTime) / 1000;
+  long elapsed =
+      ((unsigned long)esp_timer_get_time() - startTime) / 1000;
 
   if (httpCode <= 0) {
     Serial.println("Server is unrechable");
@@ -192,6 +197,8 @@ const int BITS_OF_STATUS = 3;
 const uint32_t STATUS_MASK = 0b111;
 const uint32_t REQUEST_FAILED = 0b001;
 const uint32_t REQUEST_TIMEOUT = 0b010;
+const uint32_t REQUEST_TIMEOUT_LONG = 0b011;
+const uint32_t REQUEST_SUCCEED = 0b111;
 
 void maimai_check_worker(void *) {
   uint32_t recent_error;
@@ -201,10 +208,10 @@ void maimai_check_worker(void *) {
     Elapsed.store(elapsed);
 
     recent_error <<= BITS_OF_STATUS;
-    if (elapsed <= 0)
-      recent_error |= REQUEST_FAILED;
-    if (elapsed >= 1000)
-      recent_error |= REQUEST_TIMEOUT;
+    if (elapsed <= 0) recent_error |= REQUEST_FAILED;
+    else if (elapsed >= 2000) recent_error |= REQUEST_TIMEOUT_LONG;
+    else if (elapsed >= 1000) recent_error |= REQUEST_TIMEOUT;
+    else recent_error |= REQUEST_SUCCEED;
     RecentError.store(recent_error);
 
     if (elapsed > 0 && elapsed < 1000) {
@@ -216,8 +223,7 @@ void maimai_check_worker(void *) {
 }
 
 void spawn_maimai_check() {
-  xTaskCreate(maimai_check_worker, "maimai_check", 8000, NULL,
-              ESP_TASK_PRIO_MAX / 2, NULL);
+  xTaskCreate(maimai_check_worker, "maimai_check", 8000, NULL, ESP_TASK_PRIO_MAX / 2, NULL);
 }
 
 void setup() {
@@ -235,18 +241,24 @@ void loop() {
   display.setCursor(0, 0);
 
   uint32_t recent_errors = RecentError.load();
-  for (int i = 9; i >= 0; i--) {
-    uint32_t is_error = (recent_errors >> (BITS_OF_STATUS * i)) & STATUS_MASK;
+  for (int i=9; i>=0; i--) {
+    uint32_t is_error = ( recent_errors >> (BITS_OF_STATUS*i) ) & STATUS_MASK;
     switch (is_error) {
-    case REQUEST_FAILED:
-      display.print("X");
-      break;
-    case REQUEST_TIMEOUT:
-      display.print("T");
-      break;
-    default:
-      display.print("O");
-      break;
+      case REQUEST_FAILED:
+        display.print("X");
+        break;
+      case REQUEST_TIMEOUT:
+        display.print("T");
+        break;
+      case REQUEST_TIMEOUT_LONG:
+        display.print("!");
+        break;
+      case REQUEST_SUCCEED:
+        display.print("O");
+        break;
+      default:
+        display.print(" ");
+        break;
     }
   }
   display.print("\n");
@@ -260,7 +272,7 @@ void loop() {
   } else {
     display.printf("%6s ms\n SVR DOWN\n", "--");
   }
-
+    
   display.display();
 
   delay(100);
