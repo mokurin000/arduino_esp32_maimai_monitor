@@ -9,7 +9,7 @@
 #include <Adafruit_SSD1306.h>
 #include <Wire.h>
 
-#define NO_LED_FLASHING 0
+#define NO_LED_FLASHING 1
 
 // 你使用的 OLED 尺寸（最常见的是 128x64）
 #define SCREEN_WIDTH 128
@@ -324,7 +324,7 @@ void loop() {
   }
 
   display.setTextSize(1);
-  display.printf("succ: %15" PRIu32 "\n", SuccCount.load());
+  display.printf("  DX 1.50  O %8" PRIu32 "\n", SuccCount.load());
   display.printf("T %8" PRIu32 " E %8" PRIu32,
     TimeoutCount.load(),
     ErrCount.load()
