@@ -1,6 +1,5 @@
 #include <atomic>
 #include <esp_task.h>
-#include <inttypes.h>
 
 #include <HTTPClient.h>
 #include <WiFi.h>
@@ -10,7 +9,7 @@
 #include <Adafruit_SSD1306.h>
 #include <Wire.h>
 
-#define NO_LED_FLASHING 1
+#define NO_LED_FLASHING 0
 
 // 你使用的 OLED 尺寸（最常见的是 128x64）
 #define SCREEN_WIDTH 128
@@ -236,29 +235,19 @@ void maimai_check_worker(void *) {
     long elapsed = maimai_check();
     Elapsed.store(elapsed);
 
-    recenterror_t update_mask = 0;
-    if (elapsed <= 0) update_mask = REQUEST_FAILED;
-    else if (elapsed >= 4000) update_mask = REQUEST_TIMEOUT_MESSY;
-    else if (elapsed >= 2000) update_mask = REQUEST_TIMEOUT_LONG;
-    else if (elapsed >= 1000) update_mask = REQUEST_TIMEOUT;
-    else update_mask = REQUEST_SUCCEED;
-
     recent_error <<= BITS_OF_STATUS;
-    recent_error |= update_mask;
+    if (elapsed <= 0) recent_error |= REQUEST_FAILED;
+    else if (elapsed >= 4000) recent_error |= REQUEST_TIMEOUT_MESSY;
+    else if (elapsed >= 2000) recent_error |= REQUEST_TIMEOUT_LONG;
+    else if (elapsed >= 1000) recent_error |= REQUEST_TIMEOUT;
+    else recent_error |= REQUEST_SUCCEED;
     RecentError.store(recent_error);
 
-    switch (update_mask) {
-      case REQUEST_SUCCEED:
-        SuccCount.fetch_add(1);
-        break;
-      case REQUEST_FAILED:
-        ErrCount.fetch_add(1);
-        break;
-      default:
-        TimeoutCount.fetch_add(1);
-        break;
+    if (elapsed <= 0) ErrCount.fetch_add(1);
+    else {
+      if (elapsed >= 1000) TimeoutCount.fetch_add(1);
+      SuccCount.fetch_add(1);
     }
-
 
     if (elapsed > 0 && elapsed < 1000) {
       delay(500);
@@ -269,7 +258,6 @@ void maimai_check_worker(void *) {
 }
 
 void spawn_maimai_check() {
-  RecentError.store(0);
   xTaskCreate(maimai_check_worker, "maimai_check", 8000, NULL, ESP_TASK_PRIO_MAX / 2, NULL);
 }
 
@@ -292,7 +280,6 @@ void loop() {
   display.setTextSize(2);
 
   recenterror_t recent_errors = RecentError.load();
-  Serial.println(recent_errors);
   for (int i=9; i>=0; i--) {
     recenterror_t is_error = ( recent_errors >> (BITS_OF_STATUS*i) ) & STATUS_MASK;
     switch (is_error) {
@@ -342,7 +329,7 @@ void loop() {
     TimeoutCount.load(),
     ErrCount.load()
   );
-   
+
   display.display();
 
   delay(100);
