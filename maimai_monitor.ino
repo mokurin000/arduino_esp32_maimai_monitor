@@ -9,7 +9,7 @@
 #include <Adafruit_SSD1306.h>
 #include <Wire.h>
 
-#define NO_LED_FLASHING 1
+#define NO_LED_FLASHING 0
 
 // 你使用的 OLED 尺寸（最常见的是 128x64）
 #define SCREEN_WIDTH 128
@@ -22,8 +22,8 @@
 #define OLED_ADDR 0x3C
 
 #define LED_PIN 2
-// 50% brightness
-#define LED_on ledcWrite(LED_PIN, 64)
+// 12.5% brightness
+#define LED_on ledcWrite(LED_PIN, 32)
 #define LED_off ledcWrite(LED_PIN, 0)
 
 std::atomic<bool> Flashing(false);
@@ -89,37 +89,53 @@ void initialise_oled() {
     for (;;); // 初始化失败，死循环
   }
 
-  // 清屏
-  display.clearDisplay();
-
   // 设置文字大小和颜色
   display.setTextSize(2);       // 2倍大小
   display.setTextColor(SSD1306_WHITE); // 白字
-
-  display.setCursor(0, 0);    // x=15, y=20
-  display.print("Init");
   display.dim(true);
+}
 
-  // 把缓冲区内容推到屏幕上
-  display.display();
+#define WIFI_DISCONNECTED (WiFi.status() != WL_CONNECTED)
+const char *ssid = "Mk-wifi";
+const char *password = "Y6SXeuMDReX $rx@[KRm";
+
+std::atomic<bool> ResetWifi(false);
+
+void reset_wifi(void *) {
+  for (;;) {
+    if (ResetWifi.load()) {
+      WiFi.disconnect(true);
+      WiFi.mode(WIFI_STA);
+      WiFi.begin(ssid, password);
+      ResetWifi.store(false);
+    } else {
+      delay(500);
+    }
+  }
+}
+
+void spawn_wifi_task() {
+  xTaskCreate(reset_wifi, "wifi_reset", 2000, NULL, ESP_TASK_PRIO_MAX - 1, NULL);
 }
 
 void connect_wifi() {
-  const char *ssid = "Mk-wifi";
-  const char *password = "Y6SXeuMDReX $rx@[KRm";
-  // Connect to WiFi
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    display.print(".");
-    display.display();
-    start_flash_light(125, 1);
-    delay(250);
+  while (WIFI_DISCONNECTED) {
+    ResetWifi.store(true);
+    
+    int times = 0;
+    display.clearDisplay();
+    display.setCursor(0, 0);
+    display.println("Conn WiFi");
+    while (++times < 20 && WIFI_DISCONNECTED) {
+      display.print('.');
+      display.display();
+
+      start_flash_light(250, 1);
+      delay(500);
+    }
   }
-  Serial.println("");
-  Serial.println("WiFi connected!");
-  Serial.print("IP: ");
+
+  Serial.print("LAN IP: ");
   Serial.println(WiFi.localIP());
 }
 
@@ -135,8 +151,9 @@ void maimai_check_setup() {
     return;
   }
   client->setInsecure();
+  https.setReuse(true);
 
-  https.setTimeout(15000); // 15 seconds timeout
+  https.setTimeout((uint16_t)-1); // very large timeout
   if (!https.begin(*client, serverUrl)) {
     Serial.println("[HTTPS] Unable to connect to server");
     Serial.println("Server is down");
@@ -190,11 +207,13 @@ long maimai_check() {
   return elapsed;
 }
 
-std::atomic<long> Elapsed(0);
+const long VALUE_MISSING = -1;
+std::atomic<long> Elapsed(VALUE_MISSING);
 std::atomic<uint32_t> RecentError(0);
 
 const int BITS_OF_STATUS = 3;
 const uint32_t STATUS_MASK = 0b111;
+const uint32_t EMPTY = 0b000;
 const uint32_t REQUEST_FAILED = 0b001;
 const uint32_t REQUEST_TIMEOUT = 0b010;
 const uint32_t REQUEST_TIMEOUT_LONG = 0b011;
@@ -204,6 +223,10 @@ void maimai_check_worker(void *) {
   uint32_t recent_error;
 
   for (;;) {
+    if (WIFI_DISCONNECTED) {
+      delay(100);
+      continue;
+    }
     long elapsed = maimai_check();
     Elapsed.store(elapsed);
 
@@ -231,9 +254,12 @@ void setup() {
 
   spawn_flash_task();
   initialise_oled();
+  
+  spawn_wifi_task();
   connect_wifi();
-  spawn_maimai_check();
+
   maimai_check_setup();
+  spawn_maimai_check();
 }
 
 void loop() {
@@ -264,11 +290,19 @@ void loop() {
   display.print("\n");
 
   int rssi = WiFi.RSSI();
+  if (!rssi && WIFI_DISCONNECTED) {
+    Serial.println("Start reconnecting...");
+    connect_wifi();
+    Serial.println("Reconnected");
+    return;
+  }
   display.printf("%6d dBm\n", rssi);
 
   long elapsed = Elapsed.load();
   if (elapsed > 0) {
     display.printf("%6ld ms\n", elapsed);
+  } else if (elapsed == VALUE_MISSING) {
+    display.printf("%6s ms\n", "--");
   } else {
     display.printf("%6s ms\n SVR DOWN\n", "--");
   }
