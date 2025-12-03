@@ -209,18 +209,21 @@ long maimai_check() {
 
 const long VALUE_MISSING = -1;
 std::atomic<long> Elapsed(VALUE_MISSING);
-std::atomic<uint32_t> RecentError(0);
 
 const int BITS_OF_STATUS = 3;
-const uint32_t STATUS_MASK = 0b111;
-const uint32_t EMPTY = 0b000;
-const uint32_t REQUEST_FAILED = 0b001;
-const uint32_t REQUEST_TIMEOUT = 0b010;
-const uint32_t REQUEST_TIMEOUT_LONG = 0b011;
-const uint32_t REQUEST_SUCCEED = 0b111;
+typedef uint32_t recenterror_t;
+
+std::atomic<recenterror_t> RecentError(0);
+const recenterror_t EMPTY = 0;
+const recenterror_t STATUS_MASK = 0b111;
+const recenterror_t REQUEST_SUCCEED = STATUS_MASK;
+const recenterror_t REQUEST_FAILED = 0b001;
+const recenterror_t REQUEST_TIMEOUT = 0b010;
+const recenterror_t REQUEST_TIMEOUT_LONG = 0b011;
+const recenterror_t REQUEST_TIMEOUT_MESSY = 0b100;
 
 void maimai_check_worker(void *) {
-  uint32_t recent_error;
+  recenterror_t recent_error;
 
   for (;;) {
     if (WIFI_DISCONNECTED) {
@@ -232,6 +235,7 @@ void maimai_check_worker(void *) {
 
     recent_error <<= BITS_OF_STATUS;
     if (elapsed <= 0) recent_error |= REQUEST_FAILED;
+    else if (elapsed >= 4000) recent_error |= REQUEST_TIMEOUT_MESSY;
     else if (elapsed >= 2000) recent_error |= REQUEST_TIMEOUT_LONG;
     else if (elapsed >= 1000) recent_error |= REQUEST_TIMEOUT;
     else recent_error |= REQUEST_SUCCEED;
@@ -266,9 +270,9 @@ void loop() {
   display.clearDisplay();
   display.setCursor(0, 0);
 
-  uint32_t recent_errors = RecentError.load();
+  recenterror_t recent_errors = RecentError.load();
   for (int i=9; i>=0; i--) {
-    uint32_t is_error = ( recent_errors >> (BITS_OF_STATUS*i) ) & STATUS_MASK;
+    recenterror_t is_error = ( recent_errors >> (BITS_OF_STATUS*i) ) & STATUS_MASK;
     switch (is_error) {
       case REQUEST_FAILED:
         display.print("X");
@@ -277,7 +281,10 @@ void loop() {
         display.print("T");
         break;
       case REQUEST_TIMEOUT_LONG:
-        display.print("!");
+        display.print("?");
+        break;
+      case REQUEST_TIMEOUT_MESSY:
+        display.print("#");
         break;
       case REQUEST_SUCCEED:
         display.print("O");
