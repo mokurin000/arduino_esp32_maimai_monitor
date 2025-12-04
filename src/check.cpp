@@ -49,8 +49,9 @@ void loadStatsFromSPIFFS() {
         SuccCount.store(buf[0]);
         TimeoutCount.store(buf[1]);
         ErrCount.store(buf[2]);
-        Serial.printf("[SPIFFS] Loaded: Succ=%u Timeout=%u Err=%u\n", buf[0],
-                      buf[1], buf[2]);
+        Serial.printf("[SPIFFS] Loaded: Succ=" PRIu32 " Timeout=" PRIu32
+                      " Err=" PRIu32 "\n",
+                      buf[0], buf[1], buf[2]);
     } else {
         Serial.printf("Expected %zu, found %zu bytes\n", sizeof(buf),
                       read_bytes);
@@ -68,8 +69,9 @@ void saveStatsToSPIFFS() {
     uint32_t buf[3] = {SuccCount.load(), TimeoutCount.load(), ErrCount.load()};
     f.write((uint8_t *)buf, sizeof(buf));
     f.close();
-    Serial.printf("[SPIFFS] Saved: Succ=%u Timeout=%u Err=%u\n", buf[0], buf[1],
-                  buf[2]);
+    Serial.printf("[SPIFFS] Saved: Succ=" PRIu32 " Timeout=" PRIu32
+                  " Err=" PRIu32 "\n",
+                  buf[0], buf[1], buf[2]);
 }
 
 // One-time setup
