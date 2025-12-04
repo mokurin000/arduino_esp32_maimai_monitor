@@ -3,8 +3,7 @@
 #include "ssd1306.hpp"
 #include "wifi.hpp"
 
-void setup(void)
-{
+void setup(void) {
     Serial.begin(115200);
     Serial.println("Start initialization...");
 
@@ -22,18 +21,16 @@ void setup(void)
     spawn_maimai_check();
 }
 
-void loop(void)
-{
+void loop(void) {
     display.clearDisplay();
     display.setCursor(0, 0);
     display.setTextSize(2);
 
     recenterror_t recent_errors = RecentError.load();
-    for (int i = 9; i >= 0; i--)
-    {
-        recenterror_t is_error = (recent_errors >> (BITS_OF_STATUS * i)) & STATUS_MASK;
-        switch (is_error)
-        {
+    for (int i = 9; i >= 0; i--) {
+        recenterror_t is_error =
+            (recent_errors >> (BITS_OF_STATUS * i)) & STATUS_MASK;
+        switch (is_error) {
         case REQUEST_FAILED:
             display.print("X");
             break;
@@ -57,8 +54,7 @@ void loop(void)
     display.print("\n");
 
     int rssi = WiFi.RSSI();
-    if (!rssi && WIFI_DISCONNECTED)
-    {
+    if (!rssi && WIFI_DISCONNECTED) {
         Serial.println("Start reconnecting...");
         connect_wifi();
         Serial.println("Reconnected");
@@ -67,22 +63,18 @@ void loop(void)
     display.printf("%6d dBm\n", rssi);
 
     long elapsed = Elapsed.load();
-    if (elapsed > 0)
-    {
+    if (elapsed > 0) {
         display.printf("%6ld ms\n", elapsed);
-    }
-    else if (elapsed == VALUE_MISSING)
-    {
+    } else if (elapsed == VALUE_MISSING) {
         display.printf("%6s ms\n", "--");
-    }
-    else
-    {
+    } else {
         display.printf("%6s ms\n SVR DOWN\n", "--");
     }
 
     display.setTextSize(1);
     display.printf("  DX 1.50  O %8" PRIu32 "\n", SuccCount.load());
-    display.printf("T %8" PRIu32 " E %8" PRIu32, TimeoutCount.load(), ErrCount.load());
+    display.printf("T %8" PRIu32 " E %8" PRIu32, TimeoutCount.load(),
+                   ErrCount.load());
 
     display.display();
 
