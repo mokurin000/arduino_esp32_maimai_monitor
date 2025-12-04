@@ -17,7 +17,7 @@ std::atomic<uint32_t> TimeoutCount(0);
 std::atomic<uint32_t> ErrCount(0);
 
 // Latest round-trip time in ms
-std::atomic<long> Elapsed(0);
+std::atomic<long> Elapsed(VALUE_MISSING);
 
 // Recent error history bitfield
 std::atomic<recenterror_t> RecentError(0);
