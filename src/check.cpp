@@ -93,7 +93,7 @@ void maimai_check_setup() {
 
 // Core check function — reconnects automatically on failure
 long maimai_check() {
-    unsigned long startTime = esp_timer_get_time();
+    int64_t startTime = esp_timer_get_time();
 
     // Reconnect if connection was lost
     if (!https.connected()) {
@@ -152,8 +152,6 @@ long maimai_check() {
         ErrCount.fetch_add(1);
     }
 
-    Serial.print("Elapsed:");
-    Serial.print(elapsed);
     Elapsed.store(elapsed);
 
     // Update rolling error bitfield
@@ -161,8 +159,6 @@ long maimai_check() {
     recent <<= BITS_OF_STATUS;
     recent |= mask;
 
-    Serial.print(", RecentError:");
-    Serial.println(recent);
     RecentError.store(recent);
 
     return elapsed;
