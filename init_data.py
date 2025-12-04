@@ -3,9 +3,9 @@ from pathlib import Path
 file1 = Path("src") / "data" / "DX1.50"
 file2 = Path("data") / "DX1.50"
 
-succ = 95757
-timeout = 5525
-error = 924
+succ = 64119
+timeout = 2119
+error = 634
 
 for file in [file1, file2]:
     with open(file, "wb") as f:
