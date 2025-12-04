@@ -1,8 +1,5 @@
 #include <atomic>
 
-#include <HTTPClient.h>
-#include <WiFiClientSecure.h>
-
 #define BITS_OF_STATUS 3
 
 typedef uint32_t recenterror_t;
@@ -17,9 +14,6 @@ const recenterror_t REQUEST_TIMEOUT_LONG = 0b011;
 const recenterror_t REQUEST_TIMEOUT_MESSY = 0b100;
 
 void spawn_maimai_check();
-
-extern WiFiClientSecure *client;
-extern HTTPClient https;
 
 extern std::atomic<long> Elapsed;
 extern std::atomic<uint32_t> SuccCount, TimeoutCount, ErrCount;

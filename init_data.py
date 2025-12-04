@@ -2,9 +2,9 @@ from pathlib import Path
 
 filename = Path("maimai_monitor") / "data" / "DX1.50"
 
-succ = 63327
-timeout = 2087
-error = 627
+succ = 93642
+timeout = 5437
+error = 904
 
 with open(filename, "wb") as f:
     f.truncate(0)

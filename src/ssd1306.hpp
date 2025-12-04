@@ -1,4 +1,3 @@
-#include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
 // 你使用的 OLED 尺寸（最常见的是 128x64）

@@ -2,6 +2,10 @@
 
 > Try it without an ESP32 and a SSD1315 screen: [Wokwi simulation](https://github.com/mokurin000/wokwi-esp32-maimai-monitor)
 
+The `partitions.csv` can be compatible with Arduino `default.csv`, but I would suggest performing a manual backup of records.
+
+You must have `C/C++` from Microsoft to be able to find headers without manual configuration, `clangd` is however effortless about parsing the generated `c_cpp_properties.json`.
+
 **NOW integrated with OLED 128x64 SSD13xx.**
 
 By posting ping request to maimai wahlap server, we could check it's response time (with an existing TLS session) and whether it's responding.
@@ -9,6 +13,10 @@ By posting ping request to maimai wahlap server, we could check it's response ti
 In this project, you could be notified in two ways: the LED at pin 2, and an external OLED screen.
 
 To upload the DX1.50 file, you must have [`arduino-spiffs-upload`](https://github.com/codemee/arduino-spiffs-upload) installed to `~/.arduinoIDE/plugins/`.
+
+## Development
+
+To have a better expierence than Arduino IDE, setup `pioarduino`, and reload window, wait for automatic installation.
 
 ## Function
 
