@@ -1,5 +1,7 @@
 #include <Arduino.h>
 #include <SPIFFS.h>
+#include <HTTPClient.h>
+#include <WiFiClientSecure.h>
 
 #include "check.hpp"
 #include "led.hpp"
@@ -31,27 +33,33 @@ const char *serverUrl = "https://152.136.99.118:42081/Maimai2Servlet/"
 // ---------------------------------------------------------------------------
 // Load stats from SPIFFS at boot
 // ---------------------------------------------------------------------------
-void loadStatsFromSPIFFS() {
-  if (!SPIFFS.begin(true)) {
+void loadStatsFromSPIFFS()
+{
+  if (!SPIFFS.begin(true))
+  {
     Serial.println("[SPIFFS] Failed to mount");
     return;
   }
 
   File f = SPIFFS.open("/DX1.50", "r");
-  if (!f) {
+  if (!f)
+  {
     Serial.println("[SPIFFS] No saved stats, starting from zero");
     return;
   }
 
   uint32_t buf[3];
   size_t read_bytes = f.readBytes((char *)buf, sizeof(buf));
-  if (read_bytes == sizeof(buf)) {
+  if (read_bytes == sizeof(buf))
+  {
     SuccCount.store(buf[0]);
     TimeoutCount.store(buf[1]);
     ErrCount.store(buf[2]);
     Serial.printf("[SPIFFS] Loaded: Succ=%u Timeout=%u Err=%u\n", buf[0],
                   buf[1], buf[2]);
-  } else {
+  }
+  else
+  {
     Serial.printf("Expected %zu, found %zu bytes\n", sizeof(buf), read_bytes);
   }
   f.close();
@@ -60,9 +68,11 @@ void loadStatsFromSPIFFS() {
 // ---------------------------------------------------------------------------
 // Save stats to SPIFFS (called every minute)
 // ---------------------------------------------------------------------------
-void saveStatsToSPIFFS() {
+void saveStatsToSPIFFS()
+{
   File f = SPIFFS.open("/DX1.50", "w");
-  if (!f) {
+  if (!f)
+  {
     Serial.println("[SPIFFS] Failed to open for writing");
     return;
   }
@@ -76,13 +86,15 @@ void saveStatsToSPIFFS() {
 // ---------------------------------------------------------------------------
 // One-time setup
 // ---------------------------------------------------------------------------
-void maimai_check_setup() {
+void maimai_check_setup()
+{
   // Initialize SPIFFS and load previous counters
   loadStatsFromSPIFFS();
 
   // Create secure client (only once)
   client = new WiFiClientSecure;
-  if (!client) {
+  if (!client)
+  {
     Serial.println("[HTTPS] Failed to allocate WiFiClientSecure");
     return;
   }
@@ -95,15 +107,18 @@ void maimai_check_setup() {
 // ---------------------------------------------------------------------------
 // Core check function — reconnects automatically on failure
 // ---------------------------------------------------------------------------
-long maimai_check() {
+long maimai_check()
+{
   unsigned long startTime = esp_timer_get_time();
 
   // Reconnect if connection was lost
-  if (!https.connected()) {
+  if (!https.connected())
+  {
     https.end(); // clean up old state
 
     Serial.println("[HTTPS] (Re)connecting to server...");
-    if (!https.begin(*client, serverUrl)) {
+    if (!https.begin(*client, serverUrl))
+    {
       Serial.println("[HTTPS] begin() failed");
       start_flash_light(100, 30); // fast red blink = unreachable
       return 0;
@@ -125,31 +140,43 @@ long maimai_check() {
   long elapsed = (esp_timer_get_time() - startTime) / 1000LL;
 
   recenterror_t mask;
-  if (httpCode <= 0) {
+  if (httpCode <= 0)
+  {
     Serial.printf("[HTTPS] POST failed, code=%d, elapsed=%ldms\n", httpCode,
                   elapsed);
     start_flash_light(100, 30);
     mask = REQUEST_FAILED;
     ErrCount.fetch_add(1);
-  } else if (httpCode == HTTP_CODE_OK || httpCode == 100) {
+  }
+  else if (httpCode == HTTP_CODE_OK || httpCode == 100)
+  {
     SuccCount.fetch_add(1);
 
-    if (elapsed >= 4000) {
+    if (elapsed >= 4000)
+    {
       start_flash_light(2000, 3);
       mask = REQUEST_TIMEOUT_MESSY;
       TimeoutCount.fetch_add(1);
-    } else if (elapsed >= 2000) {
+    }
+    else if (elapsed >= 2000)
+    {
       start_flash_light(1000, 4);
       mask = REQUEST_TIMEOUT_LONG;
       TimeoutCount.fetch_add(1);
-    } else if (elapsed >= 1000) {
+    }
+    else if (elapsed >= 1000)
+    {
       start_flash_light(500, 8);
       mask = REQUEST_TIMEOUT;
       TimeoutCount.fetch_add(1);
-    } else {
+    }
+    else
+    {
       mask = REQUEST_SUCCEED;
     }
-  } else {
+  }
+  else
+  {
     Serial.printf("[HTTPS] Unexpected HTTP code: %d\n", httpCode);
     mask = REQUEST_FAILED;
     ErrCount.fetch_add(1);
@@ -170,18 +197,24 @@ long maimai_check() {
 // ---------------------------------------------------------------------------
 // Worker task — runs forever
 // ---------------------------------------------------------------------------
-void maimai_check_worker(void *pvParameters) {
-  for (;;) {
-    if (WIFI_DISCONNECTED) {
+void maimai_check_worker(void *pvParameters)
+{
+  for (;;)
+  {
+    if (WIFI_DISCONNECTED)
+    {
       delay(100);
       continue;
     }
 
     long elapsed = maimai_check();
     // Adaptive delay: fast when healthy, slower when sick
-    if (elapsed > 0 && elapsed < 1500) {
+    if (elapsed > 0 && elapsed < 1500)
+    {
       delay(500); // healthy → check frequently
-    } else {
+    }
+    else
+    {
       delay(2000); // sick or failed → give server a break
     }
   }
@@ -190,8 +223,10 @@ void maimai_check_worker(void *pvParameters) {
 // ---------------------------------------------------------------------------
 // Persistence worker — saves stats every minute
 // ---------------------------------------------------------------------------
-void maimai_persist_worker(void *pvParameters) {
-  for (;;) {
+void maimai_persist_worker(void *pvParameters)
+{
+  for (;;)
+  {
     delay(60000); // every 60 seconds
     saveStatsToSPIFFS();
   }
@@ -200,7 +235,8 @@ void maimai_persist_worker(void *pvParameters) {
 // ---------------------------------------------------------------------------
 // Call this once from your main setup() after WiFi is connected
 // ---------------------------------------------------------------------------
-void spawn_maimai_check() {
+void spawn_maimai_check()
+{
   maimai_check_setup(); // init client + load stats
 
   xTaskCreatePinnedToCore(maimai_check_worker, "maimai_check", 8192, NULL,

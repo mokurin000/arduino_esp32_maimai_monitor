@@ -1,4 +1,3 @@
-#include <Arduino.h>
 #include <Wire.h>
 
 #include "ssd1306.hpp"
@@ -13,12 +12,14 @@
 static TwoWire I2CESP32 = TwoWire(0); // I2C0
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &I2CESP32,
                          -1); // -1 表示不使用 reset 引脚
-void initialise_oled() {
+void initialise_oled()
+{
   // 初始化硬件 I2C（ESP32）
   I2CESP32.begin(SDA_PIN, SCL_PIN, 400000); // 400kHz 速度
 
   // 初始化 OLED
-  if (!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) {
+  if (!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR))
+  {
     Serial.println(F("SSD1306 allocation failed"));
     for (;;)
       ; // 初始化失败，死循环
