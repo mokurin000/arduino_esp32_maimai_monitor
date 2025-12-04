@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include <Wire.h>
 
 #include "ssd1306.hpp"

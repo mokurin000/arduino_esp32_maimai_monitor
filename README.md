@@ -10,6 +10,10 @@ In this project, you could be notified in two ways: the LED at pin 2, and an ext
 
 To upload the DX1.50 file, you must have [`arduino-spiffs-upload`](https://github.com/codemee/arduino-spiffs-upload) installed to `~/.arduinoIDE/plugins/`.
 
+## Development
+
+To have a better expierence than Arduino IDE, setup `pioarduino`, and reload window, wait for automatic installation.
+
 ## Function
 
 This is a dedicated **maimai server watchdog** that constantly pings a hidden Chinese server endpoint, shows a 10-check rolling status history on an OLED, screams with fast LED flashing when the server dies, and gives graduated warnings when latency gets bad — all in real time with virtually no delay.

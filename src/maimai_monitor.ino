@@ -3,7 +3,7 @@
 #include "ssd1306.hpp"
 #include "wifi.hpp"
 
-void setup() {
+void setup(void) {
   Serial.begin(115200);
 
   spawn_flash_task();
@@ -15,7 +15,7 @@ void setup() {
   spawn_maimai_check();
 }
 
-void loop() {
+void loop(void) {
   display.clearDisplay();
   display.setCursor(0, 0);
   display.setTextSize(2);
