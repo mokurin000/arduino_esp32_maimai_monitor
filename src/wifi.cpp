@@ -4,9 +4,7 @@
 #include "ssd1306.hpp"
 #include "wifi.hpp"
 
-#define USING_WOKWI 0
-
-#if USING_WOKWI
+#ifdef USING_WOKWI
 const char *ssid = "Wokwi-GUEST";
 const char *password = "";
 #else
