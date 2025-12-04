@@ -1,6 +1,5 @@
 #include "check.hpp"
 #include "led.hpp"
-#include "recent_error.hpp"
 #include "ssd1306.hpp"
 #include "wifi.hpp"
 
@@ -13,7 +12,6 @@ void setup() {
   spawn_wifi_task();
   connect_wifi();
 
-  maimai_check_setup();
   spawn_maimai_check();
 }
 

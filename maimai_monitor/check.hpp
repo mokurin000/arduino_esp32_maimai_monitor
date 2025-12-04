@@ -3,7 +3,18 @@
 #include <HTTPClient.h>
 #include <WiFiClientSecure.h>
 
-void maimai_check_setup();
+#define BITS_OF_STATUS 3
+
+typedef uint32_t recenterror_t;
+
+const long VALUE_MISSING = -1;
+const recenterror_t EMPTY = 0;
+const recenterror_t STATUS_MASK = 0b111;
+const recenterror_t REQUEST_SUCCEED = STATUS_MASK;
+const recenterror_t REQUEST_FAILED = 0b001;
+const recenterror_t REQUEST_TIMEOUT = 0b010;
+const recenterror_t REQUEST_TIMEOUT_LONG = 0b011;
+const recenterror_t REQUEST_TIMEOUT_MESSY = 0b100;
 
 void spawn_maimai_check();
 
@@ -12,5 +23,4 @@ extern HTTPClient https;
 
 extern std::atomic<long> Elapsed;
 extern std::atomic<uint32_t> SuccCount, TimeoutCount, ErrCount;
-
-const long VALUE_MISSING = -1;
+extern std::atomic<recenterror_t> RecentError;
