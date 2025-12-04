@@ -43,6 +43,5 @@ To upload the DX1.50 file, you may have [`arduino-spiffs-upload`](https://github
 Alternatively, you could use the `pioarduino: open pio arduino core cli` inside VSCode, then
 
 ```bash
-pio run -t buildfs
 pio run -t uploadfs
 ```
