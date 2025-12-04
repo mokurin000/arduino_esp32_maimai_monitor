@@ -1,0 +1,6 @@
+[wokwi]
+version = 1
+elf = ".pio/build/stable/firmware.elf"
+firmware = ".pio/build/stable/firmware.bin"
+# due to wokwi limitation, we cannot load
+# .pio/build/stable/partitions.bin directly
