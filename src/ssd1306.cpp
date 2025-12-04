@@ -12,6 +12,8 @@
 static TwoWire I2CESP32 = TwoWire(0); // I2C0
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &I2CESP32,
                          -1); // -1 表示不使用 reset 引脚
+
+// initialize `display`
 void initialise_oled()
 {
   // 初始化硬件 I2C（ESP32）

@@ -30,9 +30,7 @@ uint8_t payload[16] = {0xFD, 0xAA, 0xAA, 0x65, 0xBE, 0x9A, 0x7A, 0xA1,
 const char *serverUrl = "https://152.136.99.118:42081/Maimai2Servlet/"
                         "250b3482854e7697de7d8eb6ea1fabb1";
 
-// ---------------------------------------------------------------------------
 // Load stats from SPIFFS at boot
-// ---------------------------------------------------------------------------
 void loadStatsFromSPIFFS()
 {
   if (!SPIFFS.begin(true))
@@ -65,9 +63,7 @@ void loadStatsFromSPIFFS()
   f.close();
 }
 
-// ---------------------------------------------------------------------------
 // Save stats to SPIFFS (called every minute)
-// ---------------------------------------------------------------------------
 void saveStatsToSPIFFS()
 {
   File f = SPIFFS.open("/DX1.50", "w");
@@ -83,9 +79,7 @@ void saveStatsToSPIFFS()
                 buf[2]);
 }
 
-// ---------------------------------------------------------------------------
 // One-time setup
-// ---------------------------------------------------------------------------
 void maimai_check_setup()
 {
   // Initialize SPIFFS and load previous counters
@@ -104,9 +98,7 @@ void maimai_check_setup()
   https.setTimeout(20000);
 }
 
-// ---------------------------------------------------------------------------
 // Core check function — reconnects automatically on failure
-// ---------------------------------------------------------------------------
 long maimai_check()
 {
   unsigned long startTime = esp_timer_get_time();
@@ -194,9 +186,7 @@ long maimai_check()
   return elapsed;
 }
 
-// ---------------------------------------------------------------------------
 // Worker task — runs forever
-// ---------------------------------------------------------------------------
 void maimai_check_worker(void *pvParameters)
 {
   for (;;)
@@ -220,9 +210,7 @@ void maimai_check_worker(void *pvParameters)
   }
 }
 
-// ---------------------------------------------------------------------------
 // Persistence worker — saves stats every minute
-// ---------------------------------------------------------------------------
 void maimai_persist_worker(void *pvParameters)
 {
   for (;;)
@@ -232,9 +220,7 @@ void maimai_persist_worker(void *pvParameters)
   }
 }
 
-// ---------------------------------------------------------------------------
-// Call this once from your main setup() after WiFi is connected
-// ---------------------------------------------------------------------------
+// Call this only after WiFi is connected
 void spawn_maimai_check()
 {
   maimai_check_setup(); // init client + load stats

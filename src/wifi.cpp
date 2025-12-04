@@ -27,6 +27,9 @@ void spawn_wifi_task() {
               NULL);
 }
 
+/*
+must call after initialized OLED
+*/
 void connect_wifi() {
   while (WIFI_DISCONNECTED) {
     ResetWifi.store(true);
