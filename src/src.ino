@@ -1,7 +1,21 @@
+#include <time.h>
+
 #include "check.hpp"
 #include "led.hpp"
 #include "ssd1306.hpp"
 #include "wifi.hpp"
+
+// SAFETY: this function is neither reentrant nor thread-safe.
+const char *get_localtime(char *buf, size_t buf_len) {
+    time_t rawtime;
+    // get RTC timer
+    time(&rawtime);
+
+    // get local time
+    const struct tm *const tzinfo = localtime(&rawtime);
+    strftime(buf, buf_len, "%Y-%m-%d %H:%M:%S", tzinfo);
+    return buf;
+}
 
 void setup(void) {
     Serial.begin(115200);
@@ -24,10 +38,14 @@ void setup(void) {
 void loop(void) {
     display.clearDisplay();
     display.setCursor(0, 0);
-    display.setTextSize(2);
 
+    char timebuf[22];
+    const char *const localtime = get_localtime(timebuf, sizeof(timebuf));
+    display.println(localtime);
+
+    display.setTextSize(1);
     recenterror_t recent_errors = RecentError.load();
-    for (int i = 9; i >= 0; i--) {
+    for (int i = 20; i >= 0; i--) {
         recenterror_t is_error =
             (recent_errors >> (BITS_OF_STATUS * i)) & STATUS_MASK;
         switch (is_error) {
@@ -52,6 +70,8 @@ void loop(void) {
         }
     }
     display.print("\n");
+
+    display.setTextSize(2);
 
     int rssi = WiFi.RSSI();
     if (!rssi && WIFI_DISCONNECTED) {

@@ -2,7 +2,7 @@
 
 #define BITS_OF_STATUS 3
 
-typedef uint32_t recenterror_t;
+typedef uint64_t recenterror_t;
 
 const long VALUE_MISSING = -1;
 const recenterror_t EMPTY = 0;
