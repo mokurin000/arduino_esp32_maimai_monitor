@@ -2,3 +2,5 @@
 /.pio
 
 /.vscode
+
+/src/src.ino.cpp

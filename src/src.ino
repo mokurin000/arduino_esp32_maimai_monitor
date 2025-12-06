@@ -39,11 +39,13 @@ void loop(void) {
     display.clearDisplay();
     display.setCursor(0, 0);
 
+    display.setTextSize(1);
+
     char timebuf[22];
     const char *const localtime = get_localtime(timebuf, sizeof(timebuf));
+    display.print(' ');
     display.println(localtime);
 
-    display.setTextSize(1);
     recenterror_t recent_errors = RecentError.load();
     for (int i = 20; i >= 0; i--) {
         recenterror_t is_error =
@@ -80,7 +82,6 @@ void loop(void) {
         Serial.println("Reconnected");
         return;
     }
-    display.printf("%6d dBm\n", rssi);
 
     long elapsed = Elapsed.load();
     if (elapsed > 0) {
@@ -92,9 +93,12 @@ void loop(void) {
     }
 
     display.setTextSize(1);
-    display.printf("  DX 1.50  O %8" PRIu32 "\n", SuccCount.load());
-    display.printf("T %8" PRIu32 " E %8" PRIu32, TimeoutCount.load(),
+    display.printf("    RSSI: %4d dBm\n", rssi);
+    display.printf("    SUCC: %8" PRIu32 "\n", SuccCount.load());
+    display.printf("T:%8" PRIu32 " E:%8" PRIu32 "\n", TimeoutCount.load(),
                    ErrCount.load());
+
+    display.println("   maimai DX. 1.50");
 
     display.display();
 
