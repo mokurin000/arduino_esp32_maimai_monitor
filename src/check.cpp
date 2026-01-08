@@ -24,8 +24,8 @@ std::atomic<long> Elapsed(VALUE_MISSING);
 // Recent error history bitfield
 std::atomic<recenterror_t> RecentError(0);
 
-uint8_t payload[16] = {0x0d, 0x1e, 0xeb, 0x54, 0x4f, 0x1a, 0x29, 0xf3,
-                       0x94, 0x40, 0x17, 0x10, 0xaf, 0xa2, 0xdf, 0x58};
+uint8_t payload[16] = {13,  30, 235, 84, 79,  26,  41,  243,
+                       148, 64, 23,  16, 175, 162, 223, 88};
 
 const char *serverUrl = "https://152.136.99.118:42081/Maimai2Servlet/"
                         "5c39ae037195be3f0f9a8e8f6f8ec849";
@@ -93,8 +93,6 @@ void maimai_check_setup() {
 
 // Core check function — reconnects automatically on failure
 long maimai_check() {
-    int64_t startTime = esp_timer_get_time();
-
     // Reconnect if connection was lost
     if (!https.connected()) {
         https.end(); // clean up old state
@@ -114,17 +112,19 @@ long maimai_check() {
         }
 
         // These headers MUST be added after every begin()
+        https.setUserAgent("5c39ae037195be3f0f9a8e8f6f8ec849#");
+
         https.addHeader("Host", "maimai-gm.wahlap.com:42081");
         https.addHeader("Accept", "*/*");
-        https.addHeader("user-agent", "5c39ae037195be3f0f9a8e8f6f8ec849#");
-        https.addHeader("Mai-Encoding", MAIMAI_VERSION);
+        https.addHeader("Mai-Encoding", "1.53");
         https.addHeader("Charset", "UTF-8");
-        https.addHeader("content-encoding", "deflate");
-        https.addHeader("expect", "100-continue");
+        https.addHeader("Content-Encoding", "deflate");
+        https.addHeader("Expect", "100-continue");
         https.addHeader("Content-Type", "application/json");
         https.addHeader("Content-Length", "16");
     }
 
+    int64_t startTime = esp_timer_get_time();
     int httpCode = https.POST(payload, sizeof(payload));
     long elapsed = (esp_timer_get_time() - startTime) / 1000LL;
 
@@ -134,11 +134,12 @@ long maimai_check() {
             Serial.printf("[HTTPS] POST failed, code=%d, elapsed=%ldms\n",
                           httpCode, elapsed);
         } else {
-            Serial.printf("Maimai DX Server is down?");
+            Serial.printf("Maimai DX Server is down? [%d]\n", httpCode);
         }
         start_flash_light(100, 30);
         mask = REQUEST_FAILED;
         ErrCount.fetch_add(1);
+        elapsed = 0;
     } else if (httpCode == HTTP_CODE_OK || httpCode == 100) {
         SuccCount.fetch_add(1);
 
@@ -161,6 +162,7 @@ long maimai_check() {
         Serial.printf("[HTTPS] Unexpected HTTP code: %d\n", httpCode);
         mask = REQUEST_FAILED;
         ErrCount.fetch_add(1);
+        elapsed = 0;
     }
 
     Elapsed.store(elapsed);
