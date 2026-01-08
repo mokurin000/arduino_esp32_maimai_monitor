@@ -129,9 +129,13 @@ long maimai_check() {
     long elapsed = (esp_timer_get_time() - startTime) / 1000LL;
 
     recenterror_t mask;
-    if (httpCode <= 0) {
-        Serial.printf("[HTTPS] POST failed, code=%d, elapsed=%ldms\n", httpCode,
-                      elapsed);
+    if (httpCode <= 0 || !https.getSize()) {
+        if (https.getSize()) {
+            Serial.printf("[HTTPS] POST failed, code=%d, elapsed=%ldms\n",
+                          httpCode, elapsed);
+        } else {
+            Serial.printf("Maimai DX Server is down?");
+        }
         start_flash_light(100, 30);
         mask = REQUEST_FAILED;
         ErrCount.fetch_add(1);
