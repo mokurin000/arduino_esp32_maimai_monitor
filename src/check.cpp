@@ -103,6 +103,13 @@ long maimai_check() {
         if (!https.begin(*client, serverUrl)) {
             Serial.println("[HTTPS] begin() failed");
             start_flash_light(100, 30); // fast red blink = unreachable
+
+            Elapsed.store(0);
+            recenterror_t recent = RecentError.load();
+            recent <<= BITS_OF_STATUS;
+            recent |= REQUEST_FAILED;
+            RecentError.store(recent);
+
             return 0;
         }
 
