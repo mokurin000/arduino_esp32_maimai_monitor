@@ -140,7 +140,7 @@ long maimai_check() {
         mask = REQUEST_FAILED;
         ErrCount.fetch_add(1);
         elapsed = 0;
-    } else if (httpCode == HTTP_CODE_OK || httpCode == 100) {
+    } else if (httpCode == HTTP_CODE_OK || httpCode == 100 || httpCode == 404) {
         SuccCount.fetch_add(1);
 
         if (elapsed >= 4000) {
