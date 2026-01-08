@@ -24,11 +24,11 @@ std::atomic<long> Elapsed(VALUE_MISSING);
 // Recent error history bitfield
 std::atomic<recenterror_t> RecentError(0);
 
-uint8_t payload[16] = {0xFD, 0xAA, 0xAA, 0x65, 0xBE, 0x9A, 0x7A, 0xA1,
-                       0x46, 0x84, 0xB9, 0xDD, 0x29, 0x64, 0x98, 0x80};
+uint8_t payload[16] = {0x0d, 0x1e, 0xeb, 0x54, 0x4f, 0x1a, 0x29, 0xf3,
+                       0x94, 0x40, 0x17, 0x10, 0xaf, 0xa2, 0xdf, 0x58};
 
 const char *serverUrl = "https://152.136.99.118:42081/Maimai2Servlet/"
-                        "250b3482854e7697de7d8eb6ea1fabb1";
+                        "5c39ae037195be3f0f9a8e8f6f8ec849";
 
 // Load stats from SPIFFS at boot
 void loadStatsFromSPIFFS() {
@@ -116,8 +116,8 @@ long maimai_check() {
         // These headers MUST be added after every begin()
         https.addHeader("Host", "maimai-gm.wahlap.com:42081");
         https.addHeader("Accept", "*/*");
-        https.addHeader("user-agent", "250b3482854e7697de7d8eb6ea1fabb1#");
-        https.addHeader("Mai-Encoding", "1.50");
+        https.addHeader("user-agent", "5c39ae037195be3f0f9a8e8f6f8ec849#");
+        https.addHeader("Mai-Encoding", "1.53");
         https.addHeader("Charset", "UTF-8");
         https.addHeader("content-encoding", "deflate");
         https.addHeader("expect", "100-continue");
