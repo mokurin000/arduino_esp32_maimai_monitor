@@ -4,6 +4,8 @@
 
 typedef uint64_t recenterror_t;
 
+#define MAIMAI_VERSION "1.53"
+
 const long VALUE_MISSING = -1;
 const recenterror_t EMPTY = 0;
 const recenterror_t STATUS_MASK = 0b111;

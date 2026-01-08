@@ -38,7 +38,7 @@ Once setup pioarduino, you could type `Command+Alt+P` and select `pioarduino: Bu
 >
 > Uploading the firmware will not overwrite your SPIFFS or LittleFS.
 
-To upload the DX1.50 file, you may have [`arduino-spiffs-upload`](https://github.com/codemee/arduino-spiffs-upload) installed to `~/.arduinoIDE/plugins/`, and type `Command+Alt+P` to run the `Upload SPIFFS...` command.
+To upload the DX1.53 file, you may have [`arduino-spiffs-upload`](https://github.com/codemee/arduino-spiffs-upload) installed to `~/.arduinoIDE/plugins/`, and type `Command+Alt+P` to run the `Upload SPIFFS...` command.
 
 Alternatively, you could use the `pioarduino: open pio arduino core cli` inside VSCode, then
 

@@ -98,7 +98,7 @@ void loop(void) {
     display.printf("T:%8" PRIu32 " E:%8" PRIu32 "\n", TimeoutCount.load(),
                    ErrCount.load());
 
-    display.println("   maimai DX. 1.50");
+    display.println("   maimai DX. " MAIMAI_VERSION);
 
     display.display();
 

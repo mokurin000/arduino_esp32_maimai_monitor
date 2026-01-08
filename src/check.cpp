@@ -37,7 +37,7 @@ void loadStatsFromSPIFFS() {
         return;
     }
 
-    File f = SPIFFS.open("/DX1.50", "r");
+    File f = SPIFFS.open("/DX" MAIMAI_VERSION, "r");
     if (!f) {
         Serial.println("[SPIFFS] No saved stats, starting from zero");
         return;
@@ -61,7 +61,7 @@ void loadStatsFromSPIFFS() {
 
 // Save stats to SPIFFS (called every minute)
 void saveStatsToSPIFFS() {
-    File f = SPIFFS.open("/DX1.50", "w");
+    File f = SPIFFS.open("/DX" MAIMAI_VERSION, "w");
     if (!f) {
         Serial.println("[SPIFFS] Failed to open for writing");
         return;
@@ -117,7 +117,7 @@ long maimai_check() {
         https.addHeader("Host", "maimai-gm.wahlap.com:42081");
         https.addHeader("Accept", "*/*");
         https.addHeader("user-agent", "5c39ae037195be3f0f9a8e8f6f8ec849#");
-        https.addHeader("Mai-Encoding", "1.53");
+        https.addHeader("Mai-Encoding", MAIMAI_VERSION);
         https.addHeader("Charset", "UTF-8");
         https.addHeader("content-encoding", "deflate");
         https.addHeader("expect", "100-continue");
