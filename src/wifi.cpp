@@ -8,8 +8,8 @@
 const char *ssid = "Wokwi-GUEST";
 const char *password = "";
 #else
-const char *ssid = "Mk-wifi";
-const char *password = "Y6SXeuMDReX $rx@[KRm";
+const char *ssid = "MeowWifi-IoT";
+const char *password = "5vInCTh404z3Yh8cV0Vh1DHBFxlzbPgL";
 #endif
 
 std::atomic<bool> ResetWifi(false);
