@@ -27,7 +27,7 @@ std::atomic<recenterror_t> RecentError(0);
 uint8_t payload[16] = {13,  30, 235, 84, 79,  26,  41,  243,
                        148, 64, 23,  16, 175, 162, 223, 88};
 
-const char *serverUrl = "https://152.136.99.118:42081/Maimai2Servlet/"
+const char *serverUrl = "https://43.137.89.90:42081/Maimai2Servlet/"
                         "5c39ae037195be3f0f9a8e8f6f8ec849";
 
 // Load stats from SPIFFS at boot
